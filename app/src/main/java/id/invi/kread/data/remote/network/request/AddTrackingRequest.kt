@@ -5,6 +5,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AddTrackingRequest(
+    @SerialName("id")
+    val id: String? = null,
     @SerialName("book_title")
     val bookTitle: String? = null,
     @SerialName("reading_date")

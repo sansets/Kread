@@ -51,6 +51,7 @@ fun HomeScreen(
     onRefresh: () -> Unit,
     onSaveTrackingSuccess: () -> Unit,
     onDeleteTrackingClick: (id: String) -> Unit,
+    onSyncClick: () -> Unit,
     onLogoutClick: () -> Unit,
 ) {
     var isMenuBottomSheetShown by remember { mutableStateOf(false) }
@@ -82,7 +83,7 @@ fun HomeScreen(
                     DefaultIconButton(
                         iconRes = R.drawable.rounded_sync_24,
                         iconTint = KreadTheme.colorScheme.primaryContainer,
-                        onClick = {},
+                        onClick = onSyncClick,
                     )
                 }
             )
@@ -122,6 +123,9 @@ fun HomeScreen(
                             habitTrackings = it,
                             onHabitTrackingItemClick = { habitTracking ->
                                 selectedHabitTracking = habitTracking
+                            },
+                            onHabitTrackingSyncClick = {
+                                onSyncClick()
                             }
                         )
                     } else {
@@ -233,6 +237,7 @@ fun HomeSuccessState(
     modifier: Modifier = Modifier,
     habitTrackings: List<Pair<HabitTracking, Result<Unit>>>,
     onHabitTrackingItemClick: (HabitTracking) -> Unit,
+    onHabitTrackingSyncClick: (HabitTracking) -> Unit
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -246,6 +251,9 @@ fun HomeSuccessState(
                 syncStatus = it.second,
                 onClick = {
                     onHabitTrackingItemClick(it.first)
+                },
+                onSyncClick = {
+                    onHabitTrackingSyncClick(it.first)
                 }
             )
         }
@@ -269,6 +277,7 @@ private fun HomeScreenPreview() {
                 )
             ),
             onRefresh = {},
+            onSyncClick = {},
             onSaveTrackingSuccess = {},
             onDeleteTrackingClick = {},
             onLogoutClick = {},

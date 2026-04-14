@@ -10,6 +10,7 @@ data class HabitTracking(
     val readingStartTime: String,
     val readingEndTime: String,
     val isSynchronized: Boolean,
+    val isSynchronizing: Boolean = false,
 )
 
 fun getDummyHabitTrackings(): List<HabitTracking> {

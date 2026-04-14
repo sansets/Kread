@@ -1,7 +1,10 @@
 package id.invi.kread.data
 
 import id.invi.kread.data.local.LocalDataSource
+import id.invi.kread.data.local.LocalResult
 import id.invi.kread.data.local.datastore.SessionManager
+import id.invi.kread.data.local.mapper.toDomain
+import id.invi.kread.data.local.mapper.toEntity
 import id.invi.kread.data.remote.RemoteDataSource
 import id.invi.kread.data.remote.RemoteResult
 import id.invi.kread.data.remote.network.mapper.toDomain
@@ -12,9 +15,12 @@ import id.invi.kread.domain.Result
 import id.invi.kread.domain.model.HabitTracking
 import id.invi.kread.domain.model.User
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -86,52 +92,168 @@ class AppRepositoryImpl @Inject constructor(
     override fun logout(): Flow<Result<Unit>> = flow {
         emit(Result.Loading)
         sessionManager.clearSession()
+        localDataSource.deleteAllHabitTrackings()
         emit(Result.Success(Unit))
     }
 
     override fun addTracking(habitTracking: HabitTracking): Flow<Result<Unit>> = flow {
         emit(Result.Loading)
+
+        // generate id for both local and remote
+        val id = java.util.UUID.randomUUID().toString()
+
+        // Save to local first
+        val entity = habitTracking.toEntity(
+            isSynchronizing = true,
+            isSynchronized = false,
+        ).copy(id = id)
+        localDataSource.insertHabitTracking(entity)
+        emit(Result.Success(Unit))
+
+        //  Try to sync with remote
         val token = sessionManager.accessToken.first() ?: ""
-        val request = habitTracking.toRequest()
-        val result = when (val remoteResult = remoteDataSource.addTracking(token, request)) {
-            is RemoteResult.Success -> Result.Success(Unit)
-            is RemoteResult.Error -> Result.Error(remoteResult.exception)
+        val request = habitTracking.toRequest().copy(id = id)
+        when (remoteDataSource.addTracking(token, request)) {
+            is RemoteResult.Success -> {
+                localDataSource.insertHabitTracking(
+                    entity.copy(
+                        isSynchronized = true,
+                        isSynchronizing = false,
+                    )
+                )
+            }
+
+            is RemoteResult.Error -> {
+                localDataSource.insertHabitTracking(
+                    entity.copy(
+                        isSynchronized = false,
+                        isSynchronizing = false,
+                    )
+                )
+            }
         }
-        emit(result)
     }
 
     override fun updateTracking(habitTracking: HabitTracking): Flow<Result<Unit>> = flow {
         emit(Result.Loading)
+        // Update local first
+        val entity = habitTracking.toEntity(
+            isSynchronized = false,
+            isSynchronizing = true,
+        )
+        localDataSource.updateHabitTracking(entity)
+        emit(Result.Success(Unit))
+
+        // Try to sync with remote
         val token = sessionManager.accessToken.first() ?: ""
         val request = habitTracking.toUpdateRequest()
-        val result = when (
-            val remoteResult =
-                remoteDataSource.updateTracking(token, habitTracking.id, request)
-        ) {
-            is RemoteResult.Success -> Result.Success(Unit)
-            is RemoteResult.Error -> Result.Error(remoteResult.exception)
+        when (remoteDataSource.updateTracking(token, habitTracking.id, request)) {
+            is RemoteResult.Success -> {
+                localDataSource.updateHabitTracking(
+                    entity.copy(
+                        isSynchronized = true,
+                        isSynchronizing = false,
+                    )
+                )
+            }
+
+            is RemoteResult.Error -> {
+                localDataSource.updateHabitTracking(
+                    entity.copy(
+                        isSynchronized = false,
+                        isSynchronizing = false,
+                    )
+                )
+            }
         }
-        emit(result)
     }
 
     override fun deleteTracking(id: String): Flow<Result<Unit>> = flow {
         emit(Result.Loading)
-        val token = sessionManager.accessToken.first() ?: ""
-        val result =
-            when (val remoteResult = remoteDataSource.deleteTracking(token, id)) {
-                is RemoteResult.Success -> Result.Success(Unit)
-                is RemoteResult.Error -> Result.Error(remoteResult.exception)
+        // Mark as deleted in local
+        val localResult = localDataSource.getHabitTrackingById(id)
+        if (localResult is LocalResult.Success && localResult.data != null) {
+            val entity = localResult.data
+            val updatedEntity = entity.copy(isDeleted = true, isSynchronized = true)
+            localDataSource.updateHabitTracking(updatedEntity)
+            emit(Result.Success(Unit))
+
+            // Try to delete from remote
+            val token = sessionManager.accessToken.first() ?: ""
+            when (remoteDataSource.deleteTracking(token, id)) {
+                is RemoteResult.Success -> {
+                    localDataSource.deleteHabitTracking(updatedEntity)
+                }
+
+                is RemoteResult.Error -> {
+                    localDataSource.updateHabitTracking(updatedEntity.copy(isSynchronized = false))
+                }
             }
-        emit(result)
+        } else {
+            emit(Result.Error(Exception("Tracking not found")))
+        }
     }
 
-    override fun getTrackings(): Flow<Result<List<HabitTracking>>> = flow {
-        emit(Result.Loading)
-        val token = sessionManager.accessToken.first() ?: ""
-        val result = when (val remoteResult = remoteDataSource.getTrackings(token)) {
-            is RemoteResult.Success -> Result.Success(remoteResult.data.toDomain())
-            is RemoteResult.Error -> Result.Error(remoteResult.exception)
+    override fun getTrackings(): Flow<Result<List<HabitTracking>>> =
+        localDataSource.getAllHabitTrackings()
+            .map { localResult ->
+                when (localResult) {
+                    is LocalResult.Success -> Result.Success(localResult.data.toDomain())
+                    is LocalResult.Error -> Result.Error(localResult.exception)
+                }
+            }
+            .onStart {
+                emit(Result.Loading)
+                syncTrackings()
+            }
+            .catch { e ->
+                Timber.e(e)
+                emit(Result.Error(e as? Exception ?: Exception(e)))
+            }
+
+    private suspend fun syncTrackings() {
+        val token = sessionManager.accessToken.first() ?: return
+
+        // Upload unsynced items
+        val unsyncedResult = localDataSource.getUnsyncedHabitTrackings()
+        if (unsyncedResult is LocalResult.Success) {
+            unsyncedResult.data.forEach { entity ->
+                // Mark as synchronizing
+                localDataSource.updateHabitTracking(entity.copy(isSynchronizing = true))
+
+                if (entity.isDeleted) {
+                    // Sync deletion
+                    if (remoteDataSource.deleteTracking(token, entity.id) is RemoteResult.Success) {
+                        localDataSource.deleteHabitTracking(entity)
+                    } else {
+                        localDataSource.updateHabitTracking(entity.copy(isSynchronizing = false))
+                    }
+                } else {
+                    // Sync addition or update
+                    val request = entity.toDomain().toRequest()
+                    // Upsert
+                    if (remoteDataSource.addTracking(token, request) is RemoteResult.Success) {
+                        localDataSource.updateHabitTracking(
+                            entity.copy(
+                                isSynchronized = true,
+                                isSynchronizing = false
+                            )
+                        )
+                    } else {
+                        localDataSource.updateHabitTracking(entity.copy(isSynchronizing = false))
+                    }
+                }
+            }
         }
-        emit(result)
+
+        // Fetch from remote and update local
+        when (val remoteResult = remoteDataSource.getTrackings(token)) {
+            is RemoteResult.Success -> {
+                val remoteData = remoteResult.data.toDomain()
+                localDataSource.insertAllHabitTrackings(remoteData.map { it.toEntity(isSynchronized = true) })
+            }
+
+            is RemoteResult.Error -> {}
+        }
     }
 }

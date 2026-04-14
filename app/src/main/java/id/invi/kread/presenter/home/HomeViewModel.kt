@@ -67,7 +67,9 @@ class HomeViewModel @Inject constructor(
                                         it.map { habitTracking ->
                                             val syncStatus =
                                                 if (habitTracking.isSynchronized) Result.Success(Unit)
-                                                else Result.Error(Exception(""))
+                                                else
+                                                    if (habitTracking.isSynchronizing) Result.Loading
+                                                    else Result.Error(Exception(""))
                                             Pair(habitTracking, syncStatus)
                                         }
                                     ),

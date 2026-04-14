@@ -33,6 +33,10 @@ data class HabitTrackingEntity(
     @SerialName("is_synchronized")
     val isSynchronized: Boolean,
 
+    @ColumnInfo("is_synchronizing")
+    @SerialName("is_synchronizing")
+    val isSynchronizing: Boolean = false,
+
     @ColumnInfo("is_deleted")
     @SerialName("is_deleted")
     val isDeleted: Boolean,

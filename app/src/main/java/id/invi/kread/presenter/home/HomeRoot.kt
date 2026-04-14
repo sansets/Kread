@@ -74,6 +74,9 @@ fun HomeRoot(
             viewModel.setPullToRefreshIndicator(true)
             viewModel.getTrackings()
         },
+        onSyncClick = {
+            viewModel.getTrackings()
+        },
         onSaveTrackingSuccess = {
             viewModel.getTrackings()
         },

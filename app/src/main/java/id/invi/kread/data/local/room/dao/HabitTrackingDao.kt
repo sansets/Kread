@@ -30,7 +30,7 @@ interface HabitTrackingDao {
     @Query("SELECT * FROM habit_trackings WHERE is_deleted = 0 ORDER BY reading_date DESC")
     fun getAllHabitTrackings(): Flow<List<HabitTrackingEntity>>
 
-    @Query("SELECT * FROM habit_trackings WHERE is_synchronized = 0")
+    @Query("SELECT * FROM habit_trackings WHERE is_synchronized = 0 AND is_synchronizing = 0")
     suspend fun getUnsyncedHabitTrackings(): List<HabitTrackingEntity>
 
     @Query("DELETE FROM habit_trackings")

@@ -18,5 +18,6 @@ fun TrackingResponse.toDomain(): HabitTracking {
         readingStartTime = readingStartTime.orEmpty().formatTime(),
         readingEndTime = readingEndTime.orEmpty().formatTime(),
         isSynchronized = true,
+        isSynchronizing = false,
     )
 }

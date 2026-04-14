@@ -36,6 +36,7 @@ fun HabitTrackingCard(
     readingEndTime: String,
     syncStatus: Result<Unit>,
     onClick: () -> Unit,
+    onSyncClick: () -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -92,6 +93,7 @@ fun HabitTrackingCard(
             HabitTrackingSyncStatus(
                 modifier = Modifier.fillMaxWidth(),
                 syncStatus = syncStatus,
+                onSyncClick = onSyncClick,
             )
         }
         Box(
@@ -114,6 +116,7 @@ private fun HabitTrackingCardPreview() {
             readingEndTime = "13:30",
             syncStatus = Result.Loading,
             onClick = {},
+            onSyncClick = {},
         )
     }
 }

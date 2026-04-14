@@ -1,6 +1,7 @@
 package id.invi.kread.ui.components.melecule
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,11 +31,16 @@ import id.invi.kread.ui.theme.KreadTheme
 fun HabitTrackingSyncStatus(
     modifier: Modifier = Modifier,
     syncStatus: Result<Unit>,
+    onSyncClick: () -> Unit,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(6.dp))
+            .run {
+                if (syncStatus is Result.Error) this.clickable { onSyncClick() }
+                else this
+            }
             .background(KreadTheme.extendedColors.backgroundCard)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -87,6 +93,7 @@ private fun HabitTrackingSyncStatusLoadingPreview() {
     KreadTheme {
         HabitTrackingSyncStatus(
             syncStatus = Result.Loading,
+            onSyncClick = {},
         )
     }
 }
@@ -97,6 +104,7 @@ private fun HabitTrackingSyncStatusErrorPreview() {
     KreadTheme {
         HabitTrackingSyncStatus(
             syncStatus = Result.Error(Exception("")),
+            onSyncClick = {},
         )
     }
 }
