@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "501380750273",
+    "project_id": "kread-1af3c",
+    "storage_bucket": "kread-1af3c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:501380750273:android:fbeb85f1f56dcfb5622d40",
+        "android_client_info": {
+          "package_name": "id.invi.kread"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCu7VcINxWovDHrj4QlLLj9liwxu3qjllE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

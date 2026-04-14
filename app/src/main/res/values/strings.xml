@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">Read Tracker</string>
+    <string name="message_failed_to_load_data">Failed to load data.</string>
+    <string name="message_empty_tracking_history">Empty tracking history.</string>
+    <string name="title_register">Register</string>
+    <string name="title_login">Login</string>
+    <string name="title_email">Email</string>
+    <string name="title_password">Password</string>
+    <string name="title_synchronizing">Synchronizing</string>
+    <string name="title_unsynchronized">Unsynchronized</string>
+    <string name="title_book_title">Book Title</string>
+    <string name="title_reading_date">Reading Date</string>
+    <string name="title_start_time">Start Time</string>
+    <string name="title_end_time">End Time</string>
+    <string name="action_logout">Logout</string>
+    <string name="action_save">Save</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_edit">Edit</string>
+    <string name="question_did_not_have_an_account">Didn\'t have an account?</string>
+    <string name="hint_enter_email">Enter email</string>
+    <string name="hint_enter_password">Enter password</string>
+    <string name="hint_tap_here_to_synchronize">Tap here to synchronize…</string>
+    <string name="hint_enter_book_title">Enter book title</string>
+    <string name="hint_enter_reading_date">Enter reading date</string>
+    <string name="hint_enter_start_time">Start time</string>
+    <string name="hint_enter_end_time">End time</string>
+</resources>

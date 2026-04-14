@@ -1,0 +1,48 @@
+package id.invi.kread.presenter.login
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import id.invi.kread.domain.AppRepository
+import id.invi.kread.domain.EventResult
+import id.invi.kread.domain.checkResultNonComposable
+import id.invi.kread.domain.sendError
+import id.invi.kread.domain.sendLoading
+import id.invi.kread.domain.sendSuccess
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val appRepository: AppRepository,
+) : ViewModel() {
+
+    private val _loginEvent = Channel<EventResult<Any>>()
+    val loginEvent = _loginEvent
+
+    fun login(
+        email: String,
+        password: String,
+    ) {
+        viewModelScope.launch {
+            appRepository.login(
+                email = email,
+                password = password,
+            ).collectLatest { result ->
+                result.checkResultNonComposable(
+                    onLoading = {
+                        _loginEvent.sendLoading()
+                    },
+                    onError = { ex ->
+                        _loginEvent.sendError(ex)
+                    },
+                    onSuccess = {
+                        _loginEvent.sendSuccess(it)
+                    }
+                )
+            }
+        }
+    }
+}
