@@ -10,6 +10,13 @@ Modern Android application designed to help users track their reading habits. Bu
 - **Modern UI**: Built entirely with Jetpack Compose for a smooth and responsive experience.
 - **Secure Auth**: Integrated authentication via Supabase.
 
+## 📸 Screenshots
+
+<p align="center">
+  <img src="screenshots/Screenshot_1776182836.png" width="300" />
+  <img src="screenshots/Screenshot_1776182851.png" width="300" />
+</p>
+
 ## 🛠 Tech Stack
 
 - **UI**: [Jetpack Compose](https://developer.android.com/jetpack/compose) (Declarative UI)
