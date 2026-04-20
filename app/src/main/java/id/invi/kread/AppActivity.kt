@@ -6,11 +6,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import dagger.hilt.android.AndroidEntryPoint
+import id.invi.kread.presenter.home.HomeRoot
 import id.invi.kread.presenter.login.LoginRoot
-import id.invi.kread.presenter.main.MainRoot
 import id.invi.kread.presenter.register.RegisterRoot
 import id.invi.kread.presenter.splash.SplashRoot
 import id.invi.kread.ui.theme.KreadTheme
@@ -27,6 +29,10 @@ class AppActivity : ComponentActivity() {
                 NavDisplay(
                     backStack = backStack,
                     onBack = { backStack.removeLastOrNull() },
+                    entryDecorators = listOf(
+                        rememberSaveableStateHolderNavEntryDecorator(),
+                        rememberViewModelStoreNavEntryDecorator()
+                    ),
                     entryProvider = { key ->
                         when (key) {
                             is AppRoute.Splash -> NavEntry(key) {
@@ -34,7 +40,7 @@ class AppActivity : ComponentActivity() {
                                     onAuthenticationCheck = {
                                         backStack.clear()
                                         if (it) {
-                                            backStack.add(AppRoute.Main)
+                                            backStack.add(AppRoute.Home)
                                         } else {
                                             backStack.add(AppRoute.Login)
                                         }
@@ -49,7 +55,7 @@ class AppActivity : ComponentActivity() {
                                     },
                                     onLoginSuccess = {
                                         backStack.clear()
-                                        backStack.add(AppRoute.Main)
+                                        backStack.add(AppRoute.Home)
                                     }
                                 )
                             }
@@ -61,13 +67,13 @@ class AppActivity : ComponentActivity() {
                                     },
                                     onRegisterSuccess = {
                                         backStack.clear()
-                                        backStack.add(AppRoute.Main)
+                                        backStack.add(AppRoute.Home)
                                     }
                                 )
                             }
 
-                            is AppRoute.Main -> NavEntry(key) {
-                                MainRoot(
+                            is AppRoute.Home -> NavEntry(key) {
+                                HomeRoot(
                                     onLogoutSuccess = {
                                         backStack.clear()
                                         backStack.add(AppRoute.Login)

@@ -11,7 +11,7 @@ data class TrackingResponse(
     @SerialName("created_at")
     val createdAt: String? = null,
     @SerialName("id")
-    val id: Int? = null,
+    val id: String? = null,
     @SerialName("reading_date")
     val readingDate: String? = null,
     @SerialName("reading_end_time")
